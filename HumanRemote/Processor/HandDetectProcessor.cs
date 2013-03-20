@@ -9,6 +9,8 @@ namespace HumanRemote.Processor
 {
     class HandDetectProcessor : IImageProcessor
     {
+        private IplImage _currentFrame;
+        private IplImage _background;
         public HandDetectProcessor(CameraController controller)
         {
 
@@ -16,50 +18,56 @@ namespace HumanRemote.Processor
 
         public IplImage ProcessImage(IplImage frame)
         {
+            _currentFrame = frame;
+#if !SKIN
             using (IplImage skin = DetectSkin(frame))
             {
                 ExtractContourAndHull(frame, skin);
+                return frame;
             }
-
-
-            return frame;
+#else
+            return DetectSkin(frame);
+#endif
         }
 
-    private void ExtractContourAndHull(IplImage frame, IplImage skin)
-    {
-        using (CvMemStorage mem = new CvMemStorage())
+        private void ExtractContourAndHull(IplImage frame, IplImage skin)
         {
-            CvSeq<CvPoint> contours = FindContours(skin, mem);
-            if (contours != null)
+            using (CvMemStorage mem = new CvMemStorage())
             {
-                Cv.DrawContours(frame, contours, CvColor.Red, CvColor.Green, 0, 3, LineType.AntiAlias);
-
-                int[] hull;
-                Cv.ConvexHull2(contours, out hull, ConvexHullOrientation.Clockwise);
-
-                // Draw Convex hull
-                CvPoint pt0 = contours[hull.Last()].Value;
-                foreach (int idx in hull)
+                IEnumerable<CvSeq<CvPoint>> contourList = FindContours(skin, mem);
+                if (contourList != null)
                 {
-                    CvPoint pt = contours[idx].Value;
-                    Cv.Line(frame, pt0, pt, new CvColor(255, 255, 255));
-                    pt0 = pt;
-                }
+                    foreach (var contours in contourList)
+                    {
+                        Cv.DrawContours(frame, contours, CvColor.Red, CvColor.Green, 0, 3, LineType.AntiAlias);
 
-                //var defect = Cv.ConvexityDefects(contours, hull);
-                //foreach (CvConvexityDefect item in defect)
-                //{
-                //    CvPoint p1 = item.Start, p2 = item.End;
-                //    CvPoint2D64f mid = new CvPoint2D64f((p1.X + p2.X) / 2.0, (p1.Y + p2.Y) / 2.0);
-                //    frame.DrawLine(p1, p2, CvColor.White, 3);
-                //    frame.DrawCircle(item.DepthPoint, 10, CvColor.Green, -1);
-                //    frame.DrawLine(mid, item.DepthPoint, CvColor.White, 1);
-                //}
+                        int[] hull;
+                        Cv.ConvexHull2(contours, out hull, ConvexHullOrientation.Clockwise);
+
+                        // Draw Convex hull
+                        CvPoint pt0 = contours[hull.Last()].Value;
+                        foreach (int idx in hull)
+                        {
+                            CvPoint pt = contours[idx].Value;
+                            Cv.Line(frame, pt0, pt, new CvColor(255, 255, 255));
+                            pt0 = pt;
+                        }
+                    }
+
+                    //var defect = Cv.ConvexityDefects(contours, hull);
+                    //foreach (CvConvexityDefect item in defect)
+                    //{
+                    //    CvPoint p1 = item.Start, p2 = item.End;
+                    //    CvPoint2D64f mid = new CvPoint2D64f((p1.X + p2.X) / 2.0, (p1.Y + p2.Y) / 2.0);
+                    //    frame.DrawLine(p1, p2, CvColor.White, 3);
+                    //    frame.DrawCircle(item.DepthPoint, 10, CvColor.Green, -1);
+                    //    frame.DrawLine(mid, item.DepthPoint, CvColor.White, 1);
+                    //}
+                }
             }
         }
-    }
 
-        private CvSeq<CvPoint> FindContours(IplImage skin, CvMemStorage mem)
+        private IEnumerable<CvSeq<CvPoint>> FindContours(IplImage skin, CvMemStorage mem)
         {
             CvSeq<CvPoint> contours;
             using (IplImage clone = skin.Clone())
@@ -71,22 +79,29 @@ namespace HumanRemote.Processor
                 }
             }
 
-            CvSeq<CvPoint> max = contours;
+            List<CvSeq<CvPoint>> allContours = new List<CvSeq<CvPoint>>();
             for (CvSeq<CvPoint> c = contours; c != null; c = c.HNext)
             {
-                if (max.Total < c.Total)
-                {
-                    max = c;
-                }
+                allContours.Add(c);
             }
+            allContours.Sort((a, b) => b.Total - a.Total);
 
-            return Cv.ApproxPoly(max, CvContour.SizeOf, mem, ApproxPolyMethod.DP, 3, true);
+            return allContours.Take(2).Select(c => Cv.ApproxPoly(c, CvContour.SizeOf, mem, ApproxPolyMethod.DP, 3, true));
         }
 
         private IplImage DetectSkin(IplImage frame)
         {
-            IplImage yCrCbFrame = frame.Clone();
-            Cv.CvtColor(yCrCbFrame, yCrCbFrame, ColorConversion.BgrToCrCb);
+            IplImage yCrCbFrame;
+            if(_background != null)
+            {
+                yCrCbFrame = frame.Clone();
+                Cv.Sub(yCrCbFrame, _background, yCrCbFrame);
+            }
+            else
+            {
+                yCrCbFrame = frame.Clone();
+            }
+            //Cv.CvtColor(yCrCbFrame, yCrCbFrame, ColorConversion.BgrToCrCb);
 
             IplImage skin = new IplImage(frame.Size, BitDepth.U8, 1);
             var YCrCb_min = new CvScalar(0, 131, 80);
@@ -96,9 +111,13 @@ namespace HumanRemote.Processor
             Cv.Erode(skin, skin, new IplConvKernel(12, 12, 6, 6, ElementShape.Rect), 1);
             Cv.Dilate(skin, skin, new IplConvKernel(6, 6, 3, 3, ElementShape.Rect), 2);
 
-            return skin;
+            return yCrCbFrame;
         }
 
+        public void InvokeAction()
+        {
+            _background = _currentFrame.Clone();
+        }
 
         public void Dispose()
         {

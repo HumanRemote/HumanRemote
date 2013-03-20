@@ -1,6 +1,6 @@
 ﻿<Window x:Class="HumanRemote.CameraWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:Controls="clr-namespace:HumanRemote.Controls"
-        Title="CameraWindow" SizeToContent="WidthAndHeight" WindowStyle="ToolWindow" ResizeMode="NoResize">
+        Title="CameraWindow" SizeToContent="WidthAndHeight" WindowStyle="ToolWindow" ResizeMode="NoResize" MouseUp="OnClick">
     <Controls:ImageWidget x:Name="imageWidget" Width="640" Height="480" />
 </Window>

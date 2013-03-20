@@ -75,5 +75,10 @@ namespace HumanRemote.Controller
         {
             Kill();
         }
+
+        public void InvokeAction()
+        {
+            Camera.InvokeAction();
+        }
     }
 }
