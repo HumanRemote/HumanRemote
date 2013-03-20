@@ -35,5 +35,13 @@ namespace HumanRemote.Camera
             return _realFrame;
         }
 
+        public override void InvokeAction()
+        {
+            if(ImageProcessor != null)
+            {
+                ImageProcessor.InvokeAction();
+            }
+        }
+
     }
 }

@@ -26,5 +26,10 @@ namespace HumanRemote.Camera
         {
             StopDevice();
         }
+
+        public virtual void InvokeAction()
+        {
+            
+        }
     }
 }

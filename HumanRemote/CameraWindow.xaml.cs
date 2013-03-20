@@ -1,4 +1,5 @@
-﻿using HumanRemote.Controller;
+﻿using System.Windows.Input;
+using HumanRemote.Controller;
 
 namespace HumanRemote
 {
@@ -27,6 +28,11 @@ namespace HumanRemote
         private void OnFrameUpdated(OpenCvSharp.IplImage obj)
         {
             imageWidget.RefreshImage(obj);
+        }
+
+        private void OnClick(object sender, MouseButtonEventArgs e)
+        {
+            _videoController.InvokeAction();
         }
     }
 }
