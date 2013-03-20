@@ -138,11 +138,6 @@
     </None>
     <AppDesigner Include="Properties\" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="hand_p.jpg">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>copy /Y  "$(SolutionDir)Libraries\OpenCv\x86\*.dll" "$(TargetDir)"</PreBuildEvent>
