@@ -1,4 +1,7 @@
-﻿using OpenCvSharp;
+﻿
+using System;
+using Emgu.CV;
+using Emgu.CV.Structure;
 
 namespace HumanRemote.Camera
 {
@@ -10,7 +13,7 @@ namespace HumanRemote.Camera
         public virtual int Height { get; set; }
         public virtual int FrameRate { get; set; }
 
-        public abstract IplImage GetFrame();
+        public abstract Image<Bgr, Byte> GetFrame();
         public abstract bool SetupDevice();
         public abstract void StopDevice();
 

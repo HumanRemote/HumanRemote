@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Threading;
+using Emgu.CV;
+using Emgu.CV.Structure;
 using HumanRemote.Camera;
-using OpenCvSharp;
 
 namespace HumanRemote.Controller
 {
@@ -52,7 +53,7 @@ namespace HumanRemote.Controller
             {
                 try
                 {
-                    IplImage currentFrame = Camera.GetFrame();
+                    var currentFrame = Camera.GetFrame();
                     OnFrameUpdated(currentFrame);
                     Suspend();
                     _autoReset.WaitOne();
@@ -64,10 +65,10 @@ namespace HumanRemote.Controller
             }
         }
 
-        public event Action<IplImage> FrameUpdated;
-        protected virtual void OnFrameUpdated(IplImage obj)
+        public event Action<Image<Bgr, byte>> FrameUpdated;
+        protected virtual void OnFrameUpdated(Image<Bgr, byte> obj)
         {
-            Action<IplImage> handler = FrameUpdated;
+            Action<Image<Bgr, byte>> handler = FrameUpdated;
             if (handler != null) handler(obj);
         }
 

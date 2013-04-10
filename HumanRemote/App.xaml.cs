@@ -12,5 +12,11 @@ namespace HumanRemote
     /// </summary>
     public partial class App : Application
     {
+        private void Application_DispatcherUnhandledException_1(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            Console.WriteLine(e);
+            e.Handled = false;
+        }
+
     }
 }
