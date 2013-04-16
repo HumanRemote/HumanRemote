@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
+using DirectShowLib;
 using HumanRemote.Camera;
 using HumanRemote.Controller;
 using HumanRemote.Processor;
-using OpenCvSharp;
-using OpenCvSharp.Blob;
-using VideoInputSharp;
 
 namespace HumanRemote
 {
@@ -30,23 +29,31 @@ namespace HumanRemote
             InitializeComponent();
             GuiDispatcher = Dispatcher;
 
-            _windows = new List<CameraWindow>();
+            try
+            {
+                _windows = new List<CameraWindow>();
 
-            _cameraController = new CameraController(CreateCamera, 25);
+                _cameraController = new CameraController(CreateCamera, 25);
 
-            _captureController = new CaptureController(100);
-            _captureController.TimeFrameElapsed += _captureController_TimeFrameElapsed;
-            CreateSubWindows();
-            _start = DateTime.Now;
-            _captureController.Start();
-            _captureController.CaptureStatus = CaptureStatus.Recording;
+                _captureController = new CaptureController(100);
+                _captureController.TimeFrameElapsed += _captureController_TimeFrameElapsed;
+                CreateSubWindows();
+                _start = DateTime.Now;
+                _captureController.Start();
+                _captureController.CaptureStatus = CaptureStatus.Recording;
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine(exception);
+                throw;
+            }
+           
         }
 
         private AbstractCamera CreateCamera(CameraController controller, int id, int camerawidth, int cameraheight,
-                                            int framerate, VideoInput videoinput)
+                                            int framerate, DsDevice device)
         {
-            return new FilterCamera(id, camerawidth, cameraheight, framerate, videoinput,
-                                    new HandDetectProcessor(controller));
+            return new FilterCamera(id, camerawidth, cameraheight, framerate, device, new BackgroundSubtractProcessor());
         }
 
 

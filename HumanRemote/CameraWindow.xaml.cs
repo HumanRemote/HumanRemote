@@ -1,4 +1,6 @@
 ﻿using System.Windows.Input;
+using Emgu.CV;
+using Emgu.CV.Structure;
 using HumanRemote.Controller;
 
 namespace HumanRemote
@@ -25,7 +27,7 @@ namespace HumanRemote
             _videoController.FrameUpdated += OnFrameUpdated;
         }
 
-        private void OnFrameUpdated(OpenCvSharp.IplImage obj)
+        private void OnFrameUpdated(Image<Bgr, byte> obj)
         {
             imageWidget.RefreshImage(obj);
         }

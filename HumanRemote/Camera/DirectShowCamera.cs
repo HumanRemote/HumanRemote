@@ -1,50 +1,41 @@
-﻿using OpenCvSharp;
-using VideoInputSharp;
+﻿using System;
+using DirectShowLib;
+using Emgu.CV;
+using Emgu.CV.Structure;
 
 namespace HumanRemote.Camera
 {
     class DirectShowCamera : AbstractCamera
     {
-        protected readonly VideoInput _videoInput;
-        protected IplImage _cameraFrame;
+        protected Capture _videoInput;
+        protected DateTime _lastUpdate;
+        protected Image<Bgr, Byte> _cameraFrame;
 
-        public DirectShowCamera(int id, int width, int height, int frameRate, VideoInput input)
+        public DirectShowCamera(int id, int width, int height, int frameRate, DsDevice device)
             : base(id, width, height, frameRate)
         {
-            _videoInput = input;
             SetupDevice();
-            Name = VideoInput.GetDeviceName(Id);
+            _videoInput = new Capture(id);
+            Name = device.Name;
         }
 
-        public override IplImage GetFrame()
+        public override Image<Bgr, Byte> GetFrame()
         {
-            if (_videoInput.IsFrameNew(Id))
+            if ((DateTime.Now - _lastUpdate) > TimeSpan.FromMilliseconds(200))
             {
-                _videoInput.GetPixels(Id, _cameraFrame.ImageData, false, true);
+                _cameraFrame = _videoInput.QueryFrame();
             }
             return _cameraFrame;
         }
 
         public override bool SetupDevice()
         {
-            if (_videoInput.IsDeviceSetup(Id))
-            {
-                StopDevice();
-            }
-            _videoInput.SetupDevice(Id, Width, Height);
-            _cameraFrame = Cv.CreateImage(new CvSize(_videoInput.GetWidth(Id), _videoInput.GetHeight(Id)), BitDepth.U8, 3);
-
-            _videoInput.SetIdealFramerate(Id, FrameRate);
-            _videoInput.SetAutoReconnectOnFreeze(Id, true, 3);
             return true;
         }
 
         public override void StopDevice()
         {
-            if (_videoInput.IsDeviceSetup(Id))
-            {
-                _videoInput.StopDevice(Id);
-            }
+            _videoInput.Dispose();
         }
     }
 }
