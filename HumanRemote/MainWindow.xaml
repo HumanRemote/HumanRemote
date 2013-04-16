@@ -3,7 +3,35 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:Controls="clr-namespace:HumanRemote.Controls"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
-        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold">
+      <Grid.RowDefinitions>
+        <RowDefinition></RowDefinition>
+        <RowDefinition></RowDefinition>
+        <RowDefinition></RowDefinition>
+      </Grid.RowDefinitions>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="auto"></ColumnDefinition>
+        <ColumnDefinition Width="auto"></ColumnDefinition>
+        <ColumnDefinition Width="auto"></ColumnDefinition>
+        <ColumnDefinition Width="auto"></ColumnDefinition>
+      </Grid.ColumnDefinitions>
+
+      <ListBox Grid.Row="0" Grid.Column="0" x:Name="selectedFilters">
+      </ListBox>
+
+      <StackPanel Grid.Row="0" Grid.Column="1">
+        <Button Click="AddFilter">hinzügen</Button>
+        <Button Click="RemoveFilter">löschen</Button>
+      </StackPanel>
+
+      <ListBox Grid.Row="0" Grid.Column="2" x:Name="filters">
+
+      </ListBox>
+
+      <StackPanel Grid.Row="0" Grid.Column="3" Orientation="Horizontal" x:Name="filterSettings">
+        <TextBlock>bla</TextBlock>
+      </StackPanel>
+      
+        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
             Time Elapsed:  <TextBlock x:Name="elapsedBox" FontWeight="Normal">00:00:00,000</TextBlock>
         </TextBlock>
     </Grid>

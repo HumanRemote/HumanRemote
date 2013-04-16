@@ -3,7 +3,7 @@ using OpenCvSharp;
 
 namespace HumanRemote.Processor
 {
-    interface IImageProcessor : IDisposable
+    public interface IImageProcessor : IDisposable
     {
         IplImage ProcessImage(IplImage img);
         void InvokeAction();
