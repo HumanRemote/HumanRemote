@@ -1,35 +1,35 @@
-﻿using HumanRemote.Processor;
-using OpenCvSharp;
-using VideoInputSharp;
+﻿using System;
+using DirectShowLib;
+using Emgu.CV;
+using Emgu.CV.Structure;
+using HumanRemote.Processor;
 
 namespace HumanRemote.Camera
 {
     class FilterCamera : DirectShowCamera
     {
-        protected IplImage _realFrame;
+        protected Image<Bgr, Byte> _realFrame;
+
+        public FilterCamera(int id, int width, int height, int frameRate, DsDevice device, IImageProcessor imageProcessor) : base(id, width, height, frameRate, device)
+        {
+            ImageProcessor = imageProcessor;
+        }
 
         public IImageProcessor ImageProcessor { get; set; }
 
-        public FilterCamera(int id, int width, int height, int frameRate, VideoInput input, IImageProcessor processor)
-            : base(id, width, height, frameRate, input)
-        {
-            ImageProcessor = processor;
-        }
 
-        public override bool SetupDevice()
+        public override Image<Bgr, Byte> GetFrame()
         {
-            _realFrame = Cv.CreateImage(new CvSize(_videoInput.GetWidth(Id), _videoInput.GetHeight(Id)), BitDepth.U8, 3);
-            return base.SetupDevice();
-        }
-
-        public override IplImage GetFrame()
-        {
-            if (_videoInput.IsFrameNew(Id))
+            if ((DateTime.Now - _lastUpdate) > TimeSpan.FromMilliseconds(200))
             {
-                _videoInput.GetPixels(Id, _cameraFrame.ImageData, false, true);
+                _cameraFrame = _videoInput.QueryFrame();
                 if (ImageProcessor != null)
                 {
                     _realFrame = ImageProcessor.ProcessImage(_cameraFrame);
+                }
+                else
+                {
+                    _realFrame = _cameraFrame;
                 }
             }
             return _realFrame;
