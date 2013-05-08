@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -44,15 +45,19 @@ namespace HumanRemote.Processor
     class BackgroundSubtractProcessor : IImageProcessor
     {
         private BackgroundSubtractorMOG2 _bg;
+        private BackgroundSubtractorMOG2 _bg2;
         private Window _thresholdWindow;
         private double _threshold;
         private double _threshold2;
 
         public BackgroundSubtractProcessor()
         {
-            _bg = new BackgroundSubtractorMOG2(500, 2 * 2, false);
+            _bg = new BackgroundSubtractorMOG2(1000, 2*2, false);
+            _bg2 = new BackgroundSubtractorMOG2(1000,2*2, false);
             BackgroundSubtractorMOG2Data data = (BackgroundSubtractorMOG2Data)Marshal.PtrToStructure(_bg.Ptr, typeof(BackgroundSubtractorMOG2Data));
+            BackgroundSubtractorMOG2Data data2 = (BackgroundSubtractorMOG2Data)Marshal.PtrToStructure(_bg2.Ptr, typeof(BackgroundSubtractorMOG2Data));
             data.nmixtures = 3;
+            data2.nmixtures = 3;
 
             _thresholdWindow = new Window();
 
@@ -89,59 +94,42 @@ namespace HumanRemote.Processor
 
         public Image<Bgr, byte> ProcessImage(Image<Bgr, byte> img)
         {
-            List<Contour<Point>> allContours;
-            var rois = DetectBlobs(img, out allContours);
+            _bg.Update(img);
+            img = _bg.BackgroundMask.Convert<Bgr, Byte>();
 
-            if (rois == null) return img;
-            if (allContours == null) return img;
-            Point min = new Point(int.MaxValue, int.MaxValue);
-            Point max = new Point(int.MinValue, int.MinValue);
+            img = img.Erode(1);
+            img = img.Dilate(1);
 
-            foreach (Seq<Point> points in rois)
-            {
-                var bounding = points.BoundingRectangle;
-                if (bounding.Left < min.X)
-                {
-                    min.X = bounding.Left;
-                }
-                if (bounding.Top < min.Y)
-                {
-                    min.Y = bounding.Top;
-                }
-                if (bounding.Bottom > max.Y)
-                {
-                    max.Y = bounding.Bottom;
-                }
-                if (bounding.Right > max.X)
-                {
-                    max.X = bounding.Right;
-                }
-            }
-
-            Image<Bgr, byte> newImg = new Image<Bgr, byte>(img.Width, img.Height, new Bgr(Color.Black));
-            //foreach (Contour<Point> contour in allContours)
-            //{
-            //    if((contour.BoundingRectangle.Width * contour.BoundingRectangle.Height) >= 50)
-            //    {
-            //        newImg.Draw(contour, new Bgr(Color.White), -1);
-            //    }
-            //}
-            foreach (var biggest in allContours.Take(2))
-            {
-                img.Draw(biggest.ApproxPoly(3).GetConvexHull(ORIENTATION.CV_CLOCKWISE), new Bgr(Color.Lime), 2);
-            }
-
-
+            img =FillBlobs(img);
+           //DrawBlobs(img);
             return img;
-            //Rectangle boundingAll = Rectangle.FromLTRB(min.X, min.Y, max.X, max.Y);
-            //var roi = _bg.ForegroundMask.Copy(boundingAll);
-            //var canny = Canny(roi);
-
-            //canny.CopyTo(newImg.GetSubRect(boundingAll));
-            //return newImg;
         }
 
-        private Image<Bgr, byte> SkinDetector(Image<Bgr, byte> newImg)
+        public void DrawCountures(Image<Bgr, Byte> img)
+        {
+            var converted = img.Convert<Gray, Byte>();
+            var contoures = converted.FindContours(CHAIN_APPROX_METHOD.CV_CHAIN_APPROX_TC89_L1, RETR_TYPE.CV_RETR_LIST);
+            if (contoures != null)
+            {
+                Draw(img,contoures);
+            }
+        }
+
+        public void Draw(Image<Bgr, byte> img, Contour<Point> contoures,bool fill = false)
+        {
+            if(fill)
+            {
+                //img.FillConvexPoly(contoures.ToArray(), new Bgr(Color.Black));
+                img.Draw(contoures, new Bgr(Color.Black), -1);
+                img.Draw(contoures, new Bgr(Color.Red), 2);
+            }
+            else
+            {
+                img.DrawPolyline(contoures.ToArray(), true, new Bgr(Color.Red), 2);
+            }
+        }
+
+        private Image<Bgr, byte> Canny(Image<Bgr, byte> newImg)
         {
 
             return newImg;
@@ -177,33 +165,47 @@ namespace HumanRemote.Processor
 
         private Image<Bgr, Byte> Canny(Image<Gray, Byte> img)
         {
-            img = img.Erode(1);
-            img = img.Dilate(1);
-
-            //var contours = img.Canny(_threshold, _threshold2);
-            //return contours.Convert<Bgr, Byte>();
-            //return img.Convert<Bgr, Byte>();
-            //var contours = img.FindContours(CHAIN_APPROX_METHOD.CV_CHAIN_APPROX_SIMPLE, RETR_TYPE.CV_RETR_EXTERNAL);
-            //while (contours != null)
-            //{
-            //    img.Draw(contours, new Gray(255), 1);
-            //}
-            return img.Convert<Bgr,Byte>();
+            var converted = img.Convert<Bgr, Byte>();
+            converted = converted.Erode(4);
+            converted = converted.Dilate(4);
+            return converted;
         }
 
-        private IEnumerable<Seq<Point>> DetectBlobs(Image<Bgr, Byte> img, out List<Contour<Point>> allContours )
+        public void DrawBlobs(Image<Bgr, Byte> img)
         {
-            img = img.Erode(1);
-            img = img.Dilate(1);
-            _bg.Update(img);
+            List<Contour<Point>> temp;
 
-            var fg = _bg.ForegroundMask;
+            var countoures = DetectBlobs(img.Convert<Gray,byte>(), out temp);
+            if(temp!=null)
+            {
+                foreach (Contour<Point> points in countoures)
+                {
+                    Draw(img, points);
+                }
+            }
+        }
 
-            fg = fg.Erode(2);
-            fg = fg.Dilate(1);
+        public Image<Bgr, byte> FillBlobs(Image<Bgr, Byte> img)
+        {
+            List<Contour<Point>> temp;
+            var whiteImage = new Image<Bgr, byte>(img.Width, img.Height,new Bgr(Color.White));
 
+            var countoures = DetectBlobs(img.Convert<Gray, byte>().Not(), out temp);
+            if (temp != null)
+            {
+                foreach (Contour<Point> points in countoures)
+                {
+
+                     Draw(whiteImage, points, true);
+                }
+            }
+            return whiteImage;
+        }
+
+        private IEnumerable<Seq<Point>> DetectBlobs(Image<Gray, Byte> img, out List<Contour<Point>> allContours)
+        {
             allContours = null;
-            Contour<Point> contours = fg.FindContours(CHAIN_APPROX_METHOD.CV_CHAIN_APPROX_NONE, RETR_TYPE.CV_RETR_EXTERNAL);
+            Contour<Point> contours = img.FindContours(CHAIN_APPROX_METHOD.CV_CHAIN_APPROX_NONE, RETR_TYPE.CV_RETR_EXTERNAL);
 
             if (contours != null)
             {
@@ -216,8 +218,8 @@ namespace HumanRemote.Processor
 
                 allContours.Sort((a, b) => b.Total.CompareTo(a.Total));
 
-                var biggest = allContours.Take(2);
-                return biggest.Select(c => c.GetConvexHull(ORIENTATION.CV_CLOCKWISE));
+                var biggest = allContours.Take(4);
+                return biggest;
             }
 
             return null;
