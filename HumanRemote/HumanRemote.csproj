@@ -143,6 +143,11 @@
     </None>
     <AppDesigner Include="Properties\" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Images\armtemplate.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>copy /Y  "$(SolutionDir)Libraries\EmguCV\x86\*.dll" "$(TargetDir)"</PreBuildEvent>
