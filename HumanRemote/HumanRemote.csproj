@@ -116,8 +116,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Processor\HandDetectProcessor.cs" />
-    <Compile Include="Processor\MultipleFilterProcessor.cs" />
     <Compile Include="Processor\BodyExtractorProcessor.cs" />
     <Compile Include="Processor\MotionDetectorProcessor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using HumanRemote.Controller;
 using OpenCvSharp;
-using OpenCvSharp.CPlusPlus;
 
 namespace HumanRemote.Processor
 {
@@ -12,7 +11,7 @@ namespace HumanRemote.Processor
     {
         private IplImage _currentFrame;
         private IplImage _background;
-        public HandDetectProcessor()
+        public HandDetectProcessor(CameraController controller)
         {
 
         }
@@ -35,10 +34,7 @@ namespace HumanRemote.Processor
         {
             using (CvMemStorage mem = new CvMemStorage())
             {
-
-                BackgroundSubtractorMOG2 bg = new BackgroundSubtractorMOG2(2, 3, false);
                 IEnumerable<CvSeq<CvPoint>> contourList = FindContours(skin, mem);
-                
                 if (contourList != null)
                 {
                     foreach (var contours in contourList)
@@ -96,29 +92,10 @@ namespace HumanRemote.Processor
         private IplImage DetectSkin(IplImage frame)
         {
             IplImage yCrCbFrame;
-            IplImage staticImage;
-            if (_background != null)
+            if(_background != null)
             {
                 yCrCbFrame = frame.Clone();
-                staticImage = frame.Clone();
                 Cv.Sub(yCrCbFrame, _background, yCrCbFrame);
-
-                return yCrCbFrame;
-
-
-                IplImage threshold = new IplImage(frame.Size, BitDepth.U8, 1);
-                var YCrCb_min = new CvScalar(0, 0, 0);
-                var YCrCb_max = new CvScalar(60, 60, 60);
-
-                Cv.InRangeS(yCrCbFrame, YCrCb_min, YCrCb_max, threshold);
-                Cv.Erode(threshold, threshold, new IplConvKernel(12, 12, 6, 6, ElementShape.Ellipse), 1);
-                Cv.Dilate(threshold, threshold, new IplConvKernel(6, 6, 3, 3, ElementShape.Ellipse), 2);
-
-                IplImage temp = new IplImage(staticImage.Size,staticImage.Depth,staticImage.NChannels);
-                Cv.CvtColor(threshold,temp,ColorConversion.GrayToBgr);
-                Cv.Sub(staticImage, temp, yCrCbFrame);
-                //TODO stop auto calibrating
-                return yCrCbFrame;
             }
             else
             {
@@ -126,13 +103,13 @@ namespace HumanRemote.Processor
             }
             //Cv.CvtColor(yCrCbFrame, yCrCbFrame, ColorConversion.BgrToCrCb);
 
-            //IplImage skin = new IplImage(frame.Size, BitDepth.U8, 1);
-            //var YCrCb_min = new CvScalar(0, 131, 80);
-            //var YCrCb_max = new CvScalar(255, 185, 135);
+            IplImage skin = new IplImage(frame.Size, BitDepth.U8, 1);
+            var YCrCb_min = new CvScalar(0, 131, 80);
+            var YCrCb_max = new CvScalar(255, 185, 135);
 
-            //Cv.InRangeS(yCrCbFrame, YCrCb_min, YCrCb_max, skin);
-            //Cv.Erode(skin, skin, new IplConvKernel(12, 12, 6, 6, ElementShape.Rect), 1);
-            //Cv.Dilate(skin, skin, new IplConvKernel(6, 6, 3, 3, ElementShape.Rect), 2);
+            Cv.InRangeS(yCrCbFrame, YCrCb_min, YCrCb_max, skin);
+            Cv.Erode(skin, skin, new IplConvKernel(12, 12, 6, 6, ElementShape.Rect), 1);
+            Cv.Dilate(skin, skin, new IplConvKernel(6, 6, 3, 3, ElementShape.Rect), 2);
 
             return yCrCbFrame;
         }

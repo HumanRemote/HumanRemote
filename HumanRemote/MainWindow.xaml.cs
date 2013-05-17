@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Threading;
 using DirectShowLib;
 using HumanRemote.Camera;
@@ -25,9 +24,6 @@ namespace HumanRemote
         private readonly List<CameraWindow> _windows;
         private DateTime _start;
 
-        private Dictionary<string, IImageProcessor> _processorsSelected = new Dictionary<string, IImageProcessor>();
-        private Dictionary<string, Type> _processors = new Dictionary<string, Type>();
-
         public MainWindow()
         {
             InitializeComponent();
@@ -39,21 +35,6 @@ namespace HumanRemote
 
                 _cameraController = new CameraController(CreateCamera, 25);
 
-<<<<<<< HEAD
-            _captureController = new CaptureController(100);
-            _captureController.TimeFrameElapsed += _captureController_TimeFrameElapsed;
-            CreateSubWindows();
-            _start = DateTime.Now;
-            _captureController.Start();
-            _captureController.CaptureStatus = CaptureStatus.Recording;
-            InitProcessorsList();
-        }
-
-        public void InitProcessorsList()
-        {
-            _processors.Add("HandDetectProcessor", typeof(HandDetectProcessor));
-            filters.Items.Add("HandDetectProcessor");
-=======
                 _captureController = new CaptureController(100);
                 _captureController.TimeFrameElapsed += _captureController_TimeFrameElapsed;
                 CreateSubWindows();
@@ -67,18 +48,12 @@ namespace HumanRemote
                 throw;
             }
            
->>>>>>> 4b54db3aeb71bb980a9a4aedf7c8af6fa415583b
         }
 
         private AbstractCamera CreateCamera(CameraController controller, int id, int camerawidth, int cameraheight,
                                             int framerate, DsDevice device)
         {
-<<<<<<< HEAD
-            return new FilterCamera(id, camerawidth, cameraheight, framerate, videoinput,
-                                    new MultipleFilterProcessor());
-=======
             return new FilterCamera(id, camerawidth, cameraheight, framerate, device, new BackgroundSubtractProcessor());
->>>>>>> 4b54db3aeb71bb980a9a4aedf7c8af6fa415583b
         }
 
 
@@ -123,20 +98,6 @@ namespace HumanRemote
         private void RefreshCaptureTime()
         {
             elapsedBox.Text = (DateTime.Now - _start).ToString();
-        }
-
-        private void AddFilter(object sender, RoutedEventArgs e)
-        {
-            string toAdd = (string) filters.SelectedItem;
-            selectedFilters.Items.Add(toAdd);
-            _processorsSelected.Add(toAdd, (IImageProcessor)Activator.CreateInstance(_processors[toAdd]));
-        }
-
-        private void RemoveFilter(object sender, RoutedEventArgs e)
-        {
-            _processorsSelected[(string) selectedFilters.SelectedItem].Dispose();
-            _processorsSelected.Remove((string) selectedFilters.SelectedItem);
-            selectedFilters.Items.Remove(selectedFilters.SelectedItem);
         }
     }
 
