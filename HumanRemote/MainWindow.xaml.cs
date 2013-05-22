@@ -47,6 +47,8 @@ namespace HumanRemote
                 Console.WriteLine(exception);
                 throw;
             }
+
+            Hide();
            
         }
 

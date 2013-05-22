@@ -27,13 +27,14 @@ namespace HumanRemote
             _videoController.FrameUpdated += OnFrameUpdated;
         }
 
-        private void OnFrameUpdated(Image<Bgr, byte> obj)
+        public void OnFrameUpdated(Image<Bgr, byte> obj)
         {
             imageWidget.RefreshImage(obj);
         }
 
         private void OnClick(object sender, MouseButtonEventArgs e)
         {
+            if(_videoController!=null)
             _videoController.InvokeAction();
         }
     }
