@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Dynamic;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -57,7 +58,7 @@ namespace HumanRemote.Processor
         private double _threshold2;
         public BackgroundSubtractProcessor()
         {
-            _bg = new BackgroundSubtractorMOG2(10000, 2 * 2, false);
+            _bg = new BackgroundSubtractorMOG2(10000, 2 * 2, true);
             BackgroundSubtractorMOG2Data data = (BackgroundSubtractorMOG2Data)Marshal.PtrToStructure(_bg.Ptr, typeof(BackgroundSubtractorMOG2Data));
             data.nmixtures = 3;
 
@@ -122,8 +123,96 @@ namespace HumanRemote.Processor
             _threshold = e.NewValue;
         }
 
+        public Image<Bgr, byte> ProcessImageHough(Image<Bgr, byte> img)
+        {
+            Image<Bgr, byte> image1 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input1.png");
+            Image<Bgr, byte> image2 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input2.png");
+            Image<Bgr, byte> image3 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input3.png");
+            Image<Bgr, byte> image4 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input4.png");
+
+            DrawHoughLines(image1);
+            DrawHoughLines(image2);
+            DrawHoughLines(image3);
+            DrawHoughLines(image4);
+
+            _a.OnFrameUpdated(image1);
+            _b.OnFrameUpdated(image2);
+            _c.OnFrameUpdated(image3);
+            _d.OnFrameUpdated(image4);
+
+
+            return image1;
+        }
+
+        public IEnumerable<LineSegment2D> GetHougLines(Image<Bgr, byte> img)
+        {
+            LineSegment2D[] lines = img.HoughLinesBinary(1, Math.PI / 90, 50, 20, 10)[0].ToArray();
+            List<LineSegment2D> toTake = new List<LineSegment2D>();
+
+            //foreach (LineSegment2D lineSegment2D in lines)
+            //{
+            //    dynamic temp = new ExpandoObject();
+            //    temp.Line = lineSegment2D;
+            //    //temp.Angle = CalculateAngle(lineSegment2D);
+            //    lineAngles.Add(temp);
+            //}
+
+            foreach (LineSegment2D line in lines)
+            {
+                if (!(toTake.Any(item =>
+                    (Math.Abs(item.P1.X - line.P1.X) +
+                    Math.Abs(item.P2.X - line.P2.X)) < 400)
+                    //||
+                    //item.Angle - line.Angle < 40
+                ))
+                {
+                    toTake.Add(line);
+                }
+            }
+
+            return toTake.Select(item => item).ToList();
+        }
+
+
+        public void DrawHoughLines(Image<Bgr, byte> img, IEnumerable<LineSegment2D> lines)
+        {
+            foreach (LineSegment2D line in lines)
+            {
+                img.Draw(line, new Bgr(Color.Violet), 1);
+                img.Draw(new CircleF(line.P1, 20), new Bgr(Color.Green), -1);
+                img.Draw(new CircleF(line.P2, 20), new Bgr(Color.Red), -1);
+            }
+        }
+
+
+        public void DrawHoughLines(Image<Bgr, byte> img)
+        {
+            var toTake = GetHougLines(img);
+            DrawHoughLines(img, toTake);
+        }
+
+        public double CalculateAngle(LineSegment2D line)
+        {
+            double deltaY = line.P2.Y - line.P1.Y;
+            double deltaX = line.P2.X - line.P1.X;
+            double angle;
+            if (deltaX != 0)
+                angle = RadianToDegree(Math.Atan2(deltaY, deltaX));
+            else
+                angle = 90;
+
+            return angle;
+        }
+
+        private double RadianToDegree(double angle)
+        {
+            return angle * (180.0 / Math.PI);
+        }
+
         public Image<Bgr, byte> ProcessImage(Image<Bgr, byte> img)
         {
+            //return ProcessImageHough(img);
+
             var inputImage = img.Clone();
             _bg.Update(img);
             img = _bg.BackgroundMask.Convert<Bgr, Byte>();
@@ -136,14 +225,18 @@ namespace HumanRemote.Processor
             //DrawBlobs(img);
             _c.OnFrameUpdated(img);
 
-            img = inputImage.Sub(img);
-            _d.OnFrameUpdated(img);
+            //use image as mask to display original image
+            var temp = inputImage.Sub(img);
+            _d.OnFrameUpdated(temp);
 
-            img = DetectSkin(img);
-            img = img.Erode(2);
-            img = img.Dilate(2);
+            //only display skin
+            //img = img.Not();
+            //img = DetectSkin(img);
+            //img = img.Erode(2);
+            //img = img.Dilate(2);
+            img = img.Not();
+            DrawHoughLines(img);
             _e.OnFrameUpdated(img);
-
 
             //img.MorphologyEx()
 
@@ -191,6 +284,7 @@ namespace HumanRemote.Processor
             var image = new Image<Bgr, byte>("C:/Users/Manuel/SoftwareEntwicklung/C#/HumanRemote/HumanRemote/Images/armtemplate.png");
             return img.MatchTemplate(image, TM_TYPE.CV_TM_CCORR_NORMED).Convert<Bgr, byte>();
         }
+
 
         public void DrawCountures(Image<Bgr, Byte> img)
         {
