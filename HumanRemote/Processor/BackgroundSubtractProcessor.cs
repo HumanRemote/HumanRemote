@@ -129,16 +129,22 @@ namespace HumanRemote.Processor
             Image<Bgr, byte> image2 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input2.png");
             Image<Bgr, byte> image3 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input3.png");
             Image<Bgr, byte> image4 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input4.png");
+            Image<Bgr, byte> image5 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input5.png");
+            Image<Bgr, byte> image6 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input6.png");
 
             DrawHoughLines(image1);
             DrawHoughLines(image2);
             DrawHoughLines(image3);
             DrawHoughLines(image4);
+            DrawHoughLines(image5);
+            DrawHoughLines(image6);
 
             _a.OnFrameUpdated(image1);
             _b.OnFrameUpdated(image2);
             _c.OnFrameUpdated(image3);
-            _d.OnFrameUpdated(image4);
+            //_d.OnFrameUpdated(image4);
+            _d.OnFrameUpdated(image6);
+            _e.OnFrameUpdated(image5);
 
 
             return image1;
@@ -157,20 +163,78 @@ namespace HumanRemote.Processor
             //    lineAngles.Add(temp);
             //}
 
-            foreach (LineSegment2D line in lines)
+            return FilterVectoresByDistance(lines, 100).ToList();
+
+            foreach (LineSegment2D line in lines.Where(item => item.Length > 50))
             {
-                if (!(toTake.Any(item =>
-                    (Math.Abs(item.P1.X - line.P1.X) +
-                    Math.Abs(item.P2.X - line.P2.X)) < 400)
-                    //||
-                    //item.Angle - line.Angle < 40
-                ))
+
+
+
+                //IEnumerable<LineSegment2D> toInsert = toTake.Where(item =>
+                //                                                          (Math.Abs(item.P1.X - line.P1.X) +
+                //                                                           Math.Abs(item.P2.X - line.P2.X) +
+                //                                                           Math.Abs(item.P1.Y - line.P1.Y) +
+                //                                                           Math.Abs(item.P2.Y - line.P2.Y)) < 400);
+                IEnumerable<LineSegment2D> toInsert = toTake.Where(item =>
+                                                                          (Math.Abs(item.P1.X - line.P1.X) +
+                                                                           Math.Abs(item.P2.X - line.P2.X) +
+                                                                           Math.Abs(item.P1.Y - line.P1.Y) +
+                                                                           Math.Abs(item.P2.Y - line.P2.Y)) < 400);
+                foreach (LineSegment2D lineSegment2D in toInsert.ToArray())
                 {
-                    toTake.Add(line);
+                    if (line.Length > lineSegment2D.Length)
+                    {
+                        toTake.Remove(lineSegment2D);
+                    }
                 }
+                toTake.Add(line);
+
+
+
+                //if (!(toTake.Any(item =>
+                //    (Math.Abs(item.P1.X - line.P1.X) +
+                //    Math.Abs(item.P2.X - line.P2.X) +
+                //    Math.Abs(item.P1.Y - line.P1.Y) +
+                //    Math.Abs(item.P2.Y - line.P2.Y)) < 300)
+                //    //||
+                //    //item.Angle - line.Angle < 40
+                //))
+                //{
+                //    toTake.Add(line);
+                //}
             }
 
             return toTake.Select(item => item).ToList();
+        }
+
+        public List<LineSegment2D> FilterVectoresByDistance(IEnumerable<LineSegment2D> lines, double minDifference)
+        {
+            List<LineSegment2D> toTake = new List<LineSegment2D>();
+
+            foreach (LineSegment2D line in lines.Where(item => item.Length > 200))
+            {
+                var similarDifference = toTake.Where(point =>
+                                                (
+                                                    GetDistance(line.P1, point.P1) < minDifference &&
+                                                    GetDistance(line.P2, point.P2) < minDifference
+                                                )
+                                                ||
+                                                (
+                                                    GetDistance(line.P2, point.P1) < minDifference &&
+                                                    GetDistance(line.P1, point.P2) < minDifference
+                                                )).OrderBy(item => item.Length).ToList();
+                similarDifference.Add(line);
+                toTake.RemoveAll(similarDifference.Contains);
+
+                toTake.Add(similarDifference.FirstOrDefault());
+            }
+            return toTake;
+
+        }
+
+        public double GetDistance(PointF a, PointF b)
+        {
+            return (Math.Sqrt(Math.Pow(Math.Abs(a.X - b.X), 2) + Math.Pow(Math.Abs(a.Y - b.Y), 2)));
         }
 
 
