@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
+using Emgu.CV.GPU;
 using Emgu.CV.Structure;
 using Emgu.CV.VideoSurveillance;
 using HumanRemote.Controller;
@@ -150,6 +151,23 @@ namespace HumanRemote.Processor
             return image1;
         }
 
+        public Image<Bgr, byte> ProcessImageLinearOptimization(Image<Bgr, byte> img)
+        {
+            img.Draw(new CircleF(new Point(img.Width/2,10),10),new Bgr(Color.Red),-1);
+            _a.OnFrameUpdated(img);
+
+
+            return img;
+        }
+
+
+
+
+        public IEnumerable<CircleF> GetHougCircles(Image<Bgr, byte> img)
+        {
+            CircleF[] circles = img.HoughCircles(new Bgr(10, 10, 10), new Bgr(10, 10, 10), 10, 10, 10, 20)[0].ToArray();
+            return circles;}
+
         public IEnumerable<LineSegment2D> GetHougLines(Image<Bgr, byte> img)
         {
             LineSegment2D[] lines = img.HoughLinesBinary(1, Math.PI / 90, 50, 20, 10)[0].ToArray();
@@ -248,11 +266,25 @@ namespace HumanRemote.Processor
             }
         }
 
+        public void DrawHoughCircles(Image<Bgr, byte> img, IEnumerable<CircleF> circles)
+        {
+            foreach (CircleF circle in circles)
+            {
+                img.Draw(circle, new Bgr(Color.Violet), 5);
+            }
+        }
+
 
         public void DrawHoughLines(Image<Bgr, byte> img)
         {
             var toTake = GetHougLines(img);
             DrawHoughLines(img, toTake);
+        }
+
+        public void DrawHoughCircles(Image<Bgr, byte> img)
+        {
+            var toTake = GetHougCircles(img);
+            DrawHoughCircles(img, toTake);
         }
 
         public double CalculateAngle(LineSegment2D line)
@@ -293,15 +325,29 @@ namespace HumanRemote.Processor
             var temp = inputImage.Sub(img);
             _d.OnFrameUpdated(temp);
 
+
+
+            //float[] BlueHist = GetHistogramData(img[0]);
+
+            //Image<Bgr, byte> image = new Image<Bgr, byte>(img.Width, img.Height);
+
+            //for (int i = 0; i < BlueHist.Length; i++)
+            //{
+            //    image.Draw(new LineSegment2D(new Point(i, (int)BlueHist[i]), new Point(i, 0)), new Bgr(Color.Red), 1);
+            //}
+
+            //_e.OnFrameUpdated(image);
+
+
             //only display skin
-            //img = img.Not();
+            img = img.Not();
             //img = DetectSkin(img);
             //img = img.Erode(2);
             //img = img.Dilate(2);
-            img = img.Not();
-            DrawHoughLines(img);
-            _e.OnFrameUpdated(img);
+            //img = img.Not();
 
+            //DrawHoughLines(img);
+            _e.OnFrameUpdated(img);
             //img.MorphologyEx()
 
             //List<Contour<Point>> allContours;
@@ -330,6 +376,20 @@ namespace HumanRemote.Processor
             //_a.OnFrameUpdated(image);
 
             return img;
+        }
+
+        private float[] GetHistogramData(Image<Gray,byte> imgGray)
+        {
+            float[] histoGrammData;
+
+            DenseHistogram histoGramm = new DenseHistogram(255, new RangeF(0, 255));
+            histoGramm.Calculate(new Image<Gray, Byte>[] { imgGray }, true, null);
+            //The data is here
+            //Histo.MatND.ManagedArray
+            histoGrammData = new float[256];
+            histoGramm.MatND.ManagedArray.CopyTo(histoGrammData, 0);
+
+            return histoGrammData;
         }
 
         private Image<Bgr, byte> DetectSkin(Image<Bgr, byte> img)
