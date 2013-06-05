@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanRemote", "HumanRemote\HumanRemote.csproj", "{808C93F8-BF3B-47C1-984F-D7FC4FD77537}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanRemote.Server", "HumanRemote.Server\HumanRemote.Server.csproj", "{A3EFD93F-B46C-4B96-A9AA-BCCCD3A724A4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,6 +15,10 @@ Global
 		{808C93F8-BF3B-47C1-984F-D7FC4FD77537}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{808C93F8-BF3B-47C1-984F-D7FC4FD77537}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{808C93F8-BF3B-47C1-984F-D7FC4FD77537}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3EFD93F-B46C-4B96-A9AA-BCCCD3A724A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3EFD93F-B46C-4B96-A9AA-BCCCD3A724A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3EFD93F-B46C-4B96-A9AA-BCCCD3A724A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3EFD93F-B46C-4B96-A9AA-BCCCD3A724A4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
