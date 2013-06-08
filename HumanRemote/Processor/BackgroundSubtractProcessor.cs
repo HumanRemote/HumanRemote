@@ -53,7 +53,10 @@ namespace HumanRemote.Processor
         private CameraWindow _c = new CameraWindow();
         private CameraWindow _d = new CameraWindow();
         private CameraWindow _e = new CameraWindow();
-
+        List<int> _rightArmAngles = new List<int>();
+        List<int> _rightHandAngles = new List<int>();
+        List<int> _leftArmAngles = new List<int>();
+        List<int> _leftHandAngles = new List<int>();
         private Window _thresholdWindow;
         private double _threshold;
         private double _threshold2;
@@ -111,6 +114,40 @@ namespace HumanRemote.Processor
             _e.Title = "e";
             _e.Show();
 
+
+
+
+            for (int i = 0; i <= 80; i++)
+            {
+                _rightArmAngles.Add(i);
+            }
+
+            for (int i = 280; i <= 360; i++)
+            {
+                _rightArmAngles.Add(i);
+            }
+
+            for (int i = 0; i <= 100; i++)
+            {
+                _rightHandAngles.Add(i);
+            }
+
+            for (int i = 260; i <= 360; i++)
+            {
+                _rightHandAngles.Add(i);
+            }
+
+
+            for (int i = 100; i <= 260; i++)
+            {
+                _leftArmAngles.Add(i);
+            }
+
+            for (int i = 80; i <= 280; i++)
+            {
+                _leftHandAngles.Add(i);
+            }
+
             //_thresholdWindow.Show();
         }
 
@@ -151,22 +188,202 @@ namespace HumanRemote.Processor
             return image1;
         }
 
+        /// <summary>
+        /// cero point of the coordinate system is at the top left corner
+        /// </summary>
+        /// <returns></returns>
         public Image<Bgr, byte> ProcessImageLinearOptimization(Image<Bgr, byte> img)
         {
-            img.Draw(new CircleF(new Point(img.Width/2,10),10),new Bgr(Color.Red),-1);
-            _a.OnFrameUpdated(img);
+            //img = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input5.png");
+            var bodyPoint = new Point(img.Width / 2, img.Height - 40);
+            var ellBowPoint = new Point(img.Width / 2, img.Height - 40);
+            var tempPoint = new Point(img.Width / 2, img.Height - 40);
+
+            List<LineSegment2D> longest = new List<LineSegment2D>();
+
+            List<LineSegment2D> toDrawGreen = new List<LineSegment2D>();
+            List<LineSegment2D> toDrawRed = new List<LineSegment2D>();
+            List<LineSegment2D> toDrawBlue = new List<LineSegment2D>();
+
+            //right side
+            var armLines = FindVectorLines(img, new Point(img.Width / 2, img.Height - 40), _rightArmAngles);
+            List<LineSegment2D> handLines = new List<LineSegment2D>();
+
+            foreach (var armLine in armLines)
+            {
+                var temp = FindVectorLines(img, new Point(armLine.P2.X, armLine.P2.Y), _rightHandAngles);
+
+                if (temp.Any())
+                {
+                    double max = temp.Max(item => item.Length);
+                    LineSegment2D biggest = temp.FirstOrDefault(item => item.Length == max);
+                    if (longest.Sum(item => item.Length) < armLine.Length + biggest.Length)
+                    {
+                        longest.Clear();
+                        longest.Add(armLine);
+                        longest.Add(biggest);
+                    }
+                }
+
+                handLines.AddRange(temp);
+            }
+            toDrawRed.AddRange(armLines);
+            toDrawBlue.AddRange(handLines);
+            toDrawGreen.AddRange(longest);
+
+            armLines.Clear();
+            handLines.Clear();
+            longest.Clear();
+
+            //left side
+            armLines = FindVectorLines(img, new Point(img.Width / 2, img.Height - 40), _leftArmAngles);
+            handLines = new List<LineSegment2D>();
+
+            foreach (var armLine in armLines)
+            {
+                var temp = FindVectorLines(img, new Point(armLine.P2.X, armLine.P2.Y), _leftHandAngles);
+
+                if (temp.Any())
+                {
+                    double max = temp.Max(item => item.Length);
+                    LineSegment2D biggest = temp.FirstOrDefault(item => item.Length == max);
+                    if (longest.Sum(item => item.Length) < armLine.Length + biggest.Length)
+                    {
+                        longest.Clear();
+                        longest.Add(armLine);
+                        longest.Add(biggest);
+                    }
+                }
+
+                handLines.AddRange(temp);
+            }
+
+            toDrawRed.AddRange(armLines);
+            toDrawBlue.AddRange(handLines);
+            toDrawGreen.AddRange(longest);
 
 
+            //foreach (var lineSegment2D in toDrawBlue)
+            //{
+            //    img.Draw(lineSegment2D, new Bgr(Color.Blue), 1);
+            //}
+
+            //foreach (var lineSegment2D in toDrawRed)
+            //{
+            //    img.Draw(lineSegment2D, new Bgr(Color.Red), 1);
+            //}
+
+            foreach (var lineSegment2D in toDrawGreen)
+            {
+                img.Draw(lineSegment2D, new Bgr(Color.Green), 5);
+            }
+
+            
             return img;
         }
 
+        public List<LineSegment2D> FindVectorLines(Image<Bgr, byte> img, Point startPoint, IEnumerable<int> angles)
+        {
+            return angles.Select(angle => FindVectorLine(img, startPoint, angle)).Where(item => item.P2.X != startPoint.X && item.P2.Y != startPoint.Y).ToList();
+        }
 
+        public LineSegment2D FindVectorLine(Image<Bgr, byte> img, Point startPoint, double degree)
+        {
+            var tempPoint = new Point(startPoint.X, startPoint.Y);
+            var importantPoint = new Point(startPoint.X, startPoint.Y);
+
+            //specific angle to step
+            double yStepCalc = Math.Round(Math.Tan(DegreeToRadian(degree)), 6);
+            double xStep = 1, yStep = yStepCalc;
+            double xStepPosition = startPoint.X, yStepPosition = startPoint.Y;
+
+            if (Math.Abs(yStep) > xStep)
+            {//the steps should be as small as possible to check pixl for pixl :-)
+                //xStep = xStep/yStep;
+                //yStep = yStep/yStep;
+
+                if (yStep < 0)
+                {
+                    xStep = 1 / yStep * -1;
+                    yStep = 1 * -1;
+                }
+                else
+                {
+                    xStep = 1 / yStep;
+                    yStep = 1;
+                }
+            }
+
+
+            if (degree == 0)
+            {//cero degree
+                xStep = 1;
+                yStep = 0;
+            }
+            else if (degree == 180)
+            {
+                xStep = -1;
+                yStep = 0;
+            }
+            else if (degree == 90)
+            {//no valid tangens available
+                xStep = 0;
+                yStep = -1;
+            }
+            else if (degree == 270)
+            {
+                xStep = 0;
+                yStep = 1;
+            }
+            else
+            {
+                if (degree >= 0 && degree <= 90)
+                {
+                    yStep *= -1;
+                }
+                else if (degree > 90 && degree <= 180)
+                {
+                    //yStep *= -1;
+                    xStep *= -1;
+                }
+                else if (degree > 180 && degree <= 270)
+                {
+                    xStep *= -1;
+                }
+                else if (degree > 270 && degree <= 360)
+                {
+                    xStep *= 1;
+                    yStep *= -1;
+                }
+            }
+
+            while (img[tempPoint.Y, tempPoint.X].Blue == 255)
+            {
+                //newest valid point
+                importantPoint.X = (int)xStepPosition;
+                importantPoint.Y = (int)yStepPosition;
+
+                xStepPosition += xStep;
+                yStepPosition += yStep;
+                tempPoint.X = (int)xStepPosition;
+                tempPoint.Y = (int)yStepPosition;
+                //toDraw.Add(new CircleF(new PointF(tempPoint.X, tempPoint.Y), 0.00001f));
+            }
+
+            return new LineSegment2D(startPoint, importantPoint);
+        }
+
+        private double DegreeToRadian(double angle)
+        {
+            return Math.PI * angle / 180.0;
+        }
 
 
         public IEnumerable<CircleF> GetHougCircles(Image<Bgr, byte> img)
         {
             CircleF[] circles = img.HoughCircles(new Bgr(10, 10, 10), new Bgr(10, 10, 10), 10, 10, 10, 20)[0].ToArray();
-            return circles;}
+            return circles;
+        }
 
         public IEnumerable<LineSegment2D> GetHougLines(Image<Bgr, byte> img)
         {
@@ -309,6 +526,7 @@ namespace HumanRemote.Processor
         {
             //return ProcessImageHough(img);
 
+
             var inputImage = img.Clone();
             _bg.Update(img);
             img = _bg.BackgroundMask.Convert<Bgr, Byte>();
@@ -347,7 +565,8 @@ namespace HumanRemote.Processor
             //img = img.Not();
 
             //DrawHoughLines(img);
-            _e.OnFrameUpdated(img);
+
+            _e.OnFrameUpdated(ProcessImageLinearOptimization(img));
             //img.MorphologyEx()
 
             //List<Contour<Point>> allContours;
@@ -378,7 +597,7 @@ namespace HumanRemote.Processor
             return img;
         }
 
-        private float[] GetHistogramData(Image<Gray,byte> imgGray)
+        private float[] GetHistogramData(Image<Gray, byte> imgGray)
         {
             float[] histoGrammData;
 
