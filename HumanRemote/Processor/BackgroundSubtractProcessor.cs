@@ -14,7 +14,6 @@ using Emgu.CV.VideoSurveillance;
 using HumanRemote.Controller;
 using System.Linq;
 using Point = System.Drawing.Point;
-using Size = System.Drawing.Size;
 
 namespace HumanRemote.Processor
 {
@@ -54,7 +53,10 @@ namespace HumanRemote.Processor
         private CameraWindow _c = new CameraWindow();
         private CameraWindow _d = new CameraWindow();
         private CameraWindow _e = new CameraWindow();
-
+        List<int> _rightArmAngles = new List<int>();
+        List<int> _rightHandAngles = new List<int>();
+        List<int> _leftArmAngles = new List<int>();
+        List<int> _leftHandAngles = new List<int>();
         private Window _thresholdWindow;
         private double _threshold;
         private double _threshold2;
@@ -112,6 +114,40 @@ namespace HumanRemote.Processor
             _e.Title = "e";
             _e.Show();
 
+
+
+
+            for (int i = 0; i <= 80; i++)
+            {
+                _rightArmAngles.Add(i);
+            }
+
+            for (int i = 280; i <= 360; i++)
+            {
+                _rightArmAngles.Add(i);
+            }
+
+            for (int i = 0; i <= 100; i++)
+            {
+                _rightHandAngles.Add(i);
+            }
+
+            for (int i = 260; i <= 360; i++)
+            {
+                _rightHandAngles.Add(i);
+            }
+
+
+            for (int i = 100; i <= 260; i++)
+            {
+                _leftArmAngles.Add(i);
+            }
+
+            for (int i = 80; i <= 280; i++)
+            {
+                _leftHandAngles.Add(i);
+            }
+
             //_thresholdWindow.Show();
         }
 
@@ -125,73 +161,348 @@ namespace HumanRemote.Processor
             _threshold = e.NewValue;
         }
 
-        //public Image<Bgr, byte> ProcessImageHough(Image<Bgr, byte> img)
-        //{
-        //    Image<Bgr, byte> image1 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input1.png");
-        //    Image<Bgr, byte> image2 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input2.png");
-        //    Image<Bgr, byte> image3 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input3.png");
-        //    Image<Bgr, byte> image4 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input4.png");
+        public Image<Bgr, byte> ProcessImageHough(Image<Bgr, byte> img)
+        {
+            Image<Bgr, byte> image1 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input1.png");
+            Image<Bgr, byte> image2 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input2.png");
+            Image<Bgr, byte> image3 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input3.png");
+            Image<Bgr, byte> image4 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input4.png");
+            Image<Bgr, byte> image5 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input5.png");
+            Image<Bgr, byte> image6 = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input6.png");
 
-        //    DrawHoughLines(image1);
-        //    DrawHoughLines(image2);
-        //    DrawHoughLines(image3);
-        //    DrawHoughLines(image4);
+            DrawHoughLines(image1);
+            DrawHoughLines(image2);
+            DrawHoughLines(image3);
+            DrawHoughLines(image4);
+            DrawHoughLines(image5);
+            DrawHoughLines(image6);
 
-        //    _a.OnFrameUpdated(image1);
-        //    _b.OnFrameUpdated(image2);
-        //    _c.OnFrameUpdated(image3);
-        //    _d.OnFrameUpdated(image4);
-
-
-        //    return image1;
-        //}
-
-        //public IEnumerable<LineSegment2D> GetHougLines(Image<Bgr, byte> img)
-        //{
-        //    LineSegment2D[] lines = img.HoughLinesBinary(1, Math.PI / 90, 50, 20, 10)[0].ToArray();
-        //    List<LineSegment2D> toTake = new List<LineSegment2D>();
-
-        //    //foreach (LineSegment2D lineSegment2D in lines)
-        //    //{
-        //    //    dynamic temp = new ExpandoObject();
-        //    //    temp.Line = lineSegment2D;
-        //    //    //temp.Angle = CalculateAngle(lineSegment2D);
-        //    //    lineAngles.Add(temp);
-        //    //}
-
-        //    foreach (LineSegment2D line in lines)
-        //    {
-        //        if (!(toTake.Any(item =>
-        //            (Math.Abs(item.P1.X - line.P1.X) +
-        //            Math.Abs(item.P2.X - line.P2.X)) < 400)
-        //            //||
-        //            //item.Angle - line.Angle < 40
-        //        ))
-        //        {
-        //            toTake.Add(line);
-        //        }
-        //    }
-
-        //    return toTake.Select(item => item).ToList();
-        //}
+            _a.OnFrameUpdated(image1);
+            _b.OnFrameUpdated(image2);
+            _c.OnFrameUpdated(image3);
+            //_d.OnFrameUpdated(image4);
+            _d.OnFrameUpdated(image6);
+            _e.OnFrameUpdated(image5);
 
 
-        //public void DrawHoughLines(Image<Bgr, byte> img, IEnumerable<LineSegment2D> lines)
-        //{
-        //    foreach (LineSegment2D line in lines)
-        //    {
-        //        img.Draw(line, new Bgr(Color.Violet), 1);
-        //        img.Draw(new CircleF(line.P1, 20), new Bgr(Color.Green), -1);
-        //        img.Draw(new CircleF(line.P2, 20), new Bgr(Color.Red), -1);
-        //    }
-        //}
+            return image1;
+        }
+
+        /// <summary>
+        /// cero point of the coordinate system is at the top left corner
+        /// </summary>
+        /// <returns></returns>
+        public Image<Bgr, byte> ProcessImageLinearOptimization(Image<Bgr, byte> img)
+        {
+            //img = new Image<Bgr, byte>(@"C:\Users\Manuel\SoftwareEntwicklung\C#\HumanRemote\HumanRemote\Images\input5.png");
+            var bodyPoint = new Point(img.Width / 2, img.Height - 40);
+            var ellBowPoint = new Point(img.Width / 2, img.Height - 40);
+            var tempPoint = new Point(img.Width / 2, img.Height - 40);
+
+            List<LineSegment2D> longest = new List<LineSegment2D>();
+
+            List<LineSegment2D> toDrawGreen = new List<LineSegment2D>();
+            List<LineSegment2D> toDrawRed = new List<LineSegment2D>();
+            List<LineSegment2D> toDrawBlue = new List<LineSegment2D>();
+
+            //right side
+            var armLines = FindVectorLines(img, new Point(img.Width / 2, img.Height - 40), _rightArmAngles);
+            List<LineSegment2D> handLines = new List<LineSegment2D>();
+
+            foreach (var armLine in armLines)
+            {
+                var temp = FindVectorLines(img, new Point(armLine.P2.X, armLine.P2.Y), _rightHandAngles);
+
+                if (temp.Any())
+                {
+                    double max = temp.Max(item => item.Length);
+                    LineSegment2D biggest = temp.FirstOrDefault(item => item.Length == max);
+                    if (longest.Sum(item => item.Length) < armLine.Length + biggest.Length)
+                    {
+                        longest.Clear();
+                        longest.Add(armLine);
+                        longest.Add(biggest);
+                    }
+                }
+
+                handLines.AddRange(temp);
+            }
+            toDrawRed.AddRange(armLines);
+            toDrawBlue.AddRange(handLines);
+            toDrawGreen.AddRange(longest);
+
+            armLines.Clear();
+            handLines.Clear();
+            longest.Clear();
+
+            //left side
+            armLines = FindVectorLines(img, new Point(img.Width / 2, img.Height - 40), _leftArmAngles);
+            handLines = new List<LineSegment2D>();
+
+            foreach (var armLine in armLines)
+            {
+                var temp = FindVectorLines(img, new Point(armLine.P2.X, armLine.P2.Y), _leftHandAngles);
+
+                if (temp.Any())
+                {
+                    double max = temp.Max(item => item.Length);
+                    LineSegment2D biggest = temp.FirstOrDefault(item => item.Length == max);
+                    if (longest.Sum(item => item.Length) < armLine.Length + biggest.Length)
+                    {
+                        longest.Clear();
+                        longest.Add(armLine);
+                        longest.Add(biggest);
+                    }
+                }
+
+                handLines.AddRange(temp);
+            }
+
+            toDrawRed.AddRange(armLines);
+            toDrawBlue.AddRange(handLines);
+            toDrawGreen.AddRange(longest);
 
 
-        //public void DrawHoughLines(Image<Bgr, byte> img)
-        //{
-        //    var toTake = GetHougLines(img);
-        //    DrawHoughLines(img, toTake);
-        //}
+            //foreach (var lineSegment2D in toDrawBlue)
+            //{
+            //    img.Draw(lineSegment2D, new Bgr(Color.Blue), 1);
+            //}
+
+            //foreach (var lineSegment2D in toDrawRed)
+            //{
+            //    img.Draw(lineSegment2D, new Bgr(Color.Red), 1);
+            //}
+
+            foreach (var lineSegment2D in toDrawGreen)
+            {
+                img.Draw(lineSegment2D, new Bgr(Color.Green), 5);
+            }
+
+            
+            return img;
+        }
+
+        public List<LineSegment2D> FindVectorLines(Image<Bgr, byte> img, Point startPoint, IEnumerable<int> angles)
+        {
+            return angles.Select(angle => FindVectorLine(img, startPoint, angle)).Where(item => item.P2.X != startPoint.X && item.P2.Y != startPoint.Y).ToList();
+        }
+
+        public LineSegment2D FindVectorLine(Image<Bgr, byte> img, Point startPoint, double degree)
+        {
+            var tempPoint = new Point(startPoint.X, startPoint.Y);
+            var importantPoint = new Point(startPoint.X, startPoint.Y);
+
+            //specific angle to step
+            double yStepCalc = Math.Round(Math.Tan(DegreeToRadian(degree)), 6);
+            double xStep = 1, yStep = yStepCalc;
+            double xStepPosition = startPoint.X, yStepPosition = startPoint.Y;
+
+            if (Math.Abs(yStep) > xStep)
+            {//the steps should be as small as possible to check pixl for pixl :-)
+                //xStep = xStep/yStep;
+                //yStep = yStep/yStep;
+
+                if (yStep < 0)
+                {
+                    xStep = 1 / yStep * -1;
+                    yStep = 1 * -1;
+                }
+                else
+                {
+                    xStep = 1 / yStep;
+                    yStep = 1;
+                }
+            }
+
+
+            if (degree == 0)
+            {//cero degree
+                xStep = 1;
+                yStep = 0;
+            }
+            else if (degree == 180)
+            {
+                xStep = -1;
+                yStep = 0;
+            }
+            else if (degree == 90)
+            {//no valid tangens available
+                xStep = 0;
+                yStep = -1;
+            }
+            else if (degree == 270)
+            {
+                xStep = 0;
+                yStep = 1;
+            }
+            else
+            {
+                if (degree >= 0 && degree <= 90)
+                {
+                    yStep *= -1;
+                }
+                else if (degree > 90 && degree <= 180)
+                {
+                    //yStep *= -1;
+                    xStep *= -1;
+                }
+                else if (degree > 180 && degree <= 270)
+                {
+                    xStep *= -1;
+                }
+                else if (degree > 270 && degree <= 360)
+                {
+                    xStep *= 1;
+                    yStep *= -1;
+                }
+            }
+
+            while (img[tempPoint.Y, tempPoint.X].Blue == 255)
+            {
+                //newest valid point
+                importantPoint.X = (int)xStepPosition;
+                importantPoint.Y = (int)yStepPosition;
+
+                xStepPosition += xStep;
+                yStepPosition += yStep;
+                tempPoint.X = (int)xStepPosition;
+                tempPoint.Y = (int)yStepPosition;
+                //toDraw.Add(new CircleF(new PointF(tempPoint.X, tempPoint.Y), 0.00001f));
+            }
+
+            return new LineSegment2D(startPoint, importantPoint);
+        }
+
+        private double DegreeToRadian(double angle)
+        {
+            return Math.PI * angle / 180.0;
+        }
+
+
+        public IEnumerable<CircleF> GetHougCircles(Image<Bgr, byte> img)
+        {
+            CircleF[] circles = img.HoughCircles(new Bgr(10, 10, 10), new Bgr(10, 10, 10), 10, 10, 10, 20)[0].ToArray();
+            return circles;
+        }
+
+        public IEnumerable<LineSegment2D> GetHougLines(Image<Bgr, byte> img)
+        {
+            LineSegment2D[] lines = img.HoughLinesBinary(1, Math.PI / 90, 50, 20, 10)[0].ToArray();
+            List<LineSegment2D> toTake = new List<LineSegment2D>();
+
+            //foreach (LineSegment2D lineSegment2D in lines)
+            //{
+            //    dynamic temp = new ExpandoObject();
+            //    temp.Line = lineSegment2D;
+            //    //temp.Angle = CalculateAngle(lineSegment2D);
+            //    lineAngles.Add(temp);
+            //}
+
+            return FilterVectoresByDistance(lines, 100).ToList();
+
+            foreach (LineSegment2D line in lines.Where(item => item.Length > 50))
+            {
+
+
+
+                //IEnumerable<LineSegment2D> toInsert = toTake.Where(item =>
+                //                                                          (Math.Abs(item.P1.X - line.P1.X) +
+                //                                                           Math.Abs(item.P2.X - line.P2.X) +
+                //                                                           Math.Abs(item.P1.Y - line.P1.Y) +
+                //                                                           Math.Abs(item.P2.Y - line.P2.Y)) < 400);
+                IEnumerable<LineSegment2D> toInsert = toTake.Where(item =>
+                                                                          (Math.Abs(item.P1.X - line.P1.X) +
+                                                                           Math.Abs(item.P2.X - line.P2.X) +
+                                                                           Math.Abs(item.P1.Y - line.P1.Y) +
+                                                                           Math.Abs(item.P2.Y - line.P2.Y)) < 400);
+                foreach (LineSegment2D lineSegment2D in toInsert.ToArray())
+                {
+                    if (line.Length > lineSegment2D.Length)
+                    {
+                        toTake.Remove(lineSegment2D);
+                    }
+                }
+                toTake.Add(line);
+
+
+
+                //if (!(toTake.Any(item =>
+                //    (Math.Abs(item.P1.X - line.P1.X) +
+                //    Math.Abs(item.P2.X - line.P2.X) +
+                //    Math.Abs(item.P1.Y - line.P1.Y) +
+                //    Math.Abs(item.P2.Y - line.P2.Y)) < 300)
+                //    //||
+                //    //item.Angle - line.Angle < 40
+                //))
+                //{
+                //    toTake.Add(line);
+                //}
+            }
+
+            return toTake.Select(item => item).ToList();
+        }
+
+        public List<LineSegment2D> FilterVectoresByDistance(IEnumerable<LineSegment2D> lines, double minDifference)
+        {
+            List<LineSegment2D> toTake = new List<LineSegment2D>();
+
+            foreach (LineSegment2D line in lines.Where(item => item.Length > 200))
+            {
+                var similarDifference = toTake.Where(point =>
+                                                (
+                                                    GetDistance(line.P1, point.P1) < minDifference &&
+                                                    GetDistance(line.P2, point.P2) < minDifference
+                                                )
+                                                ||
+                                                (
+                                                    GetDistance(line.P2, point.P1) < minDifference &&
+                                                    GetDistance(line.P1, point.P2) < minDifference
+                                                )).OrderBy(item => item.Length).ToList();
+                similarDifference.Add(line);
+                toTake.RemoveAll(similarDifference.Contains);
+
+                toTake.Add(similarDifference.FirstOrDefault());
+            }
+            return toTake;
+
+        }
+
+        public double GetDistance(PointF a, PointF b)
+        {
+            return (Math.Sqrt(Math.Pow(Math.Abs(a.X - b.X), 2) + Math.Pow(Math.Abs(a.Y - b.Y), 2)));
+        }
+
+
+        public void DrawHoughLines(Image<Bgr, byte> img, IEnumerable<LineSegment2D> lines)
+        {
+            foreach (LineSegment2D line in lines)
+            {
+                img.Draw(line, new Bgr(Color.Violet), 1);
+                img.Draw(new CircleF(line.P1, 20), new Bgr(Color.Green), -1);
+                img.Draw(new CircleF(line.P2, 20), new Bgr(Color.Red), -1);
+            }
+        }
+
+        public void DrawHoughCircles(Image<Bgr, byte> img, IEnumerable<CircleF> circles)
+        {
+            foreach (CircleF circle in circles)
+            {
+                img.Draw(circle, new Bgr(Color.Violet), 5);
+            }
+        }
+
+
+        public void DrawHoughLines(Image<Bgr, byte> img)
+        {
+            var toTake = GetHougLines(img);
+            DrawHoughLines(img, toTake);
+        }
+
+        public void DrawHoughCircles(Image<Bgr, byte> img)
+        {
+            var toTake = GetHougCircles(img);
+            DrawHoughCircles(img, toTake);
+        }
 
         public double CalculateAngle(LineSegment2D line)
         {
@@ -215,6 +526,7 @@ namespace HumanRemote.Processor
         {
             //return ProcessImageHough(img);
 
+
             var inputImage = img.Clone();
             _bg.Update(img);
             img = _bg.BackgroundMask.Convert<Bgr, Byte>();
@@ -231,16 +543,30 @@ namespace HumanRemote.Processor
             var temp = inputImage.Sub(img);
             _d.OnFrameUpdated(temp);
 
+
+
+            //float[] BlueHist = GetHistogramData(img[0]);
+
+            //Image<Bgr, byte> image = new Image<Bgr, byte>(img.Width, img.Height);
+
+            //for (int i = 0; i < BlueHist.Length; i++)
+            //{
+            //    image.Draw(new LineSegment2D(new Point(i, (int)BlueHist[i]), new Point(i, 0)), new Bgr(Color.Red), 1);
+            //}
+
+            //_e.OnFrameUpdated(image);
+
+
             //only display skin
-            //img = img.Not();
+            img = img.Not();
             //img = DetectSkin(img);
             //img = img.Erode(2);
             //img = img.Dilate(2);
-            img = img.Not();
-            SkeletalLinearOptimizing(inputImage, img);
-            //DrawHoughLines(img);
-            _e.OnFrameUpdated(img);
+            //img = img.Not();
 
+            //DrawHoughLines(img);
+
+            _e.OnFrameUpdated(ProcessImageLinearOptimization(img));
             //img.MorphologyEx()
 
             //List<Contour<Point>> allContours;
@@ -270,17 +596,19 @@ namespace HumanRemote.Processor
 
             return img;
         }
-        private GpuCascadeClassifier _bodyDetector = new GpuCascadeClassifier("HS.xml");
-        private void SkeletalLinearOptimizing(Image<Bgr, byte> input, Image<Bgr, byte> img)
+
+        private float[] GetHistogramData(Image<Gray, byte> imgGray)
         {
-            using (GpuImage<Gray, byte> gpu = new GpuImage<Gray, byte>(input.Convert<Gray, byte>()))
-            {
-                var bodies = _bodyDetector.DetectMultiScale(gpu, 1.1, 10, new Size(20, 20));
-                foreach (var b in bodies)
-                {
-                    img.Draw(new CircleF(new PointF(b.X + b.Width / 2, b.Y + b.Height), 10),new Bgr(Color.Blue), 2);
-                }
-            }
+            float[] histoGrammData;
+
+            DenseHistogram histoGramm = new DenseHistogram(255, new RangeF(0, 255));
+            histoGramm.Calculate(new Image<Gray, Byte>[] { imgGray }, true, null);
+            //The data is here
+            //Histo.MatND.ManagedArray
+            histoGrammData = new float[256];
+            histoGramm.MatND.ManagedArray.CopyTo(histoGrammData, 0);
+
+            return histoGrammData;
         }
 
         private Image<Bgr, byte> DetectSkin(Image<Bgr, byte> img)
