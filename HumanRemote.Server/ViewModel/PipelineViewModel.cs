@@ -80,7 +80,7 @@ namespace HumanRemote.Server.ViewModel
             _mainSource = new SimpleImageCaptureSource(0);
             _mainSource.FrameUpdated += OnSourceUpdated;
             _pipeline.AddImageSource(_mainSource);
-            _pipeline.BodyDetector = new HaarDetectorImageProcessor();
+            _pipeline.BodyDetector = new SilhouetteExtractingImageProcessor();
             _pipeline.BodyDetector.ImageProcessed += OnBodyDetectorImageProcessed;
             _pipeline.BodyDetector.PreImageProcessed += OnPreBodyDetectorImageProcess;
 

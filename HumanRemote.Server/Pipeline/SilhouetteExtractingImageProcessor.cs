@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
+using Emgu.CV.GPU;
 using Emgu.CV.Structure;
 using Emgu.CV.VideoSurveillance;
 using Emgu.Util;
@@ -50,7 +51,7 @@ namespace HumanRemote.Server.Pipeline
         {
             Action<SimpleImageData> handler = ImageProcessed;
             if (handler != null) handler(obj);
-        }      
+        }
         public event Action<SimpleImageData> PreImageProcessed;
         protected virtual void OnPreImageProcessed(SimpleImageData obj)
         {
@@ -63,6 +64,12 @@ namespace HumanRemote.Server.Pipeline
             private readonly SilhouetteExtractingImageProcessor _processor;
             private readonly BackgroundSubtractorMOG2 _bg;
 
+            private static GpuCascadeClassifier _hs;
+
+            static SilhouetteExtractingImageProcessorData()
+            {
+                _hs = new GpuCascadeClassifier("Cascades/HS.xml");
+            }
 
             public SilhouetteExtractingImageProcessorData(SilhouetteExtractingImageProcessor processor)
             {
@@ -75,7 +82,7 @@ namespace HumanRemote.Server.Pipeline
             public Image<Bgr, byte> Process(SimpleImageData data)
             {
                 Image<Bgr, byte> image = data.Image;
-                
+
                 data.Image = image;
                 //
                 // Phase 1: Denoise
@@ -94,6 +101,55 @@ namespace HumanRemote.Server.Pipeline
                 // Phase 4: Blob Detection
                 image = FillBlobs(image);
 
+                // 
+                // Phase 5: Mark Body
+                image = MarkBody(image, data.OriginalImage);
+
+                return image;
+            }
+
+            private Image<Bgr, byte> MarkBody(Image<Bgr, byte> image, Image<Bgr, byte> original)
+            {
+                using (GpuImage<Gray, byte> gray = new GpuImage<Gray, byte>(original.Convert<Gray, byte>()))
+                {
+                    var results = _hs.DetectMultiScale(gray, 1.1, 10, new Size(20, 20)).OrderByDescending(s => s.Width * s.Height).Take(1).ToArray();
+                    if (results.Length == 1)
+                    {
+                        List<Contour<Point>> temp;
+                        var bodyContours = DetectBlobs(image.Convert<Gray, byte>().Not(), out temp);
+                        if (bodyContours != null)
+                        {
+                            bodyContours = bodyContours.OrderByDescending(item => item.Total).Take(10);
+
+                            var bodyRect = results[0];
+                            Point body = new Point(bodyRect.X + bodyRect.Width / 2, bodyRect.Y + bodyRect.Height);
+
+                            // Find Left (left on the image) 120°-230°
+                            Point elbow;
+                            int elbowLength = 120;
+                            for (int angle = 230; angle >= 120; angle -= 10)
+                            {
+                                // sin(angle) = offsetY / elbowLength
+                                // cos(angle) = offsetX / elbowLength
+
+                                // offsetY = sin(angle) * elbowLength
+                                // offsetX = cos(angle) * elbowLength
+
+                                double offsetY = Math.Sin(angle * Math.PI / 180) * elbowLength;
+                                double offsetX = Math.Cos(angle * Math.PI / 180) * elbowLength;
+
+                                elbow = new Point(body.X + (int)offsetX, body.Y + (int)offsetY);
+                                image.Draw(new CircleF(new PointF(elbow.X, elbow.Y), 10), new Bgr(Color.Green), 2);
+                            }
+                        }
+
+                    }
+                    foreach (var rectangle in results)
+                    {
+                        image.Draw(rectangle, new Bgr(Color.Blue), 2);
+                        image.Draw(new CircleF(new PointF(rectangle.X + rectangle.Width / 2, rectangle.Y + rectangle.Height), 10), new Bgr(Color.Blue), 2);
+                    }
+                }
                 return image;
             }
 

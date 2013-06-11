@@ -59,24 +59,26 @@ namespace HumanRemote.Server.Pipeline
         {
             private readonly HaarDetectorImageProcessor _processor;
             private readonly BackgroundSubtractorMOG2 _bg;
-            private static GpuCascadeClassifier _nose;
-            private static GpuCascadeClassifier _profile;
+            //private static GpuCascadeClassifier _nose;
+            //private static GpuCascadeClassifier _profile;
             private static GpuCascadeClassifier _hs;
-            private static GpuCascadeClassifier _eye;
-            private static GpuCascadeClassifier _hand;
-            private static GpuCascadeClassifier _palm;
+            //private static GpuCascadeClassifier _eye;
+            //private static GpuCascadeClassifier _hand;
+            //private static GpuCascadeClassifier _palm;
             private static MCvFont _font;
 
             static HaarDetectorImageProcessorData()
             {
-                _nose = new GpuCascadeClassifier("Cascades/haarcascade_frontalface_default.xml");
-                _profile = new GpuCascadeClassifier("Cascades/haarcascade_profileface.xml");
-                _eye = new GpuCascadeClassifier("Cascades/haarcascade_eye.xml");
+                //_nose = new GpuCascadeClassifier("Cascades/haarcascade_frontalface_default.xml");
+                //_profile = new GpuCascadeClassifier("Cascades/haarcascade_profileface.xml");
+                //_eye = new GpuCascadeClassifier("Cascades/haarcascade_eye.xml");
                 _hs = new GpuCascadeClassifier("Cascades/HS.xml");
-                _hand = new GpuCascadeClassifier("Cascades/Hand.Cascade.1.xml");
-                _palm = new GpuCascadeClassifier("Cascades/palm.xml");
+                //_hand = new GpuCascadeClassifier("Cascades/Hand.Cascade.1.xml");
+                //_palm = new GpuCascadeClassifier("Cascades/palm.xml");
                 _font = new MCvFont(FONT.CV_FONT_HERSHEY_COMPLEX, 1, 1);
             }
+
+
 
             public HaarDetectorImageProcessorData(HaarDetectorImageProcessor processor)
             {
@@ -90,25 +92,27 @@ namespace HumanRemote.Server.Pipeline
                 using (GpuImage<Gray, byte> gray = new GpuImage<Gray, byte>(data.Image.Convert<Gray, byte>()))
                 {
 
-                    var results = _nose.DetectMultiScale(gray, 1.1, 10, new Size(20, 20));
-                    var headResults = results;
-                    foreach (var rectangle in results)
-                    {
-                        data.Image.Draw(new CircleF(new PointF(rectangle.X + rectangle.Width / 2, rectangle.Y + rectangle.Height / 2), 10), new Bgr(Color.Red), 2);
-                        data.Image.Draw("Head", ref _font,
-                                        new Point(rectangle.X + rectangle.Width / 2 + 15, rectangle.Y + rectangle.Height / 2), new Bgr(Color.Red));
-                        data.Image.Draw(new CircleF(new PointF(rectangle.X + rectangle.Width / 2, rectangle.Y + rectangle.Height), 10), new Bgr(Color.Green), 2);
-                        data.Image.Draw("Neck", ref _font,
-                                      new Point(rectangle.X + rectangle.Width / 2 + 15, rectangle.Y + rectangle.Height), new Bgr(Color.Green));
-                    }
+                    Rectangle[] results;
+                    
+                    //results = _nose.DetectMultiScale(gray, 1.1, 10, new Size(20, 20));
+                    //var headResults = results;
+                    //foreach (var rectangle in results)
+                    //{
+                    //    data.Image.Draw(new CircleF(new PointF(rectangle.X + rectangle.Width / 2, rectangle.Y + rectangle.Height / 2), 10), new Bgr(Color.Red), 2);
+                    //    data.Image.Draw("Head", ref _font,
+                    //                    new Point(rectangle.X + rectangle.Width / 2 + 15, rectangle.Y + rectangle.Height / 2), new Bgr(Color.Red));
+                    //    data.Image.Draw(new CircleF(new PointF(rectangle.X + rectangle.Width / 2, rectangle.Y + rectangle.Height), 10), new Bgr(Color.Green), 2);
+                    //    data.Image.Draw("Neck", ref _font,
+                    //                  new Point(rectangle.X + rectangle.Width / 2 + 15, rectangle.Y + rectangle.Height), new Bgr(Color.Green));
+                    //}
 
                     results = _hs.DetectMultiScale(gray, 1.1, 10, new Size(20, 20));
                     foreach (var rectangle in results)
                     {
                         data.Image.Draw(rectangle, new Bgr(Color.Blue), 2);
                         data.Image.Draw(new CircleF(new PointF(rectangle.X + rectangle.Width / 2, rectangle.Y + rectangle.Height), 10), new Bgr(Color.Blue), 2);
-                        data.Image.Draw("Body", ref _font,
-                                     new Point(rectangle.X + rectangle.Width / 2 + 15, rectangle.Y + rectangle.Height), new Bgr(Color.Blue));
+                        //data.Image.Draw("Body", ref _font,
+                        //             new Point(rectangle.X + rectangle.Width / 2 + 15, rectangle.Y + rectangle.Height), new Bgr(Color.Blue));
                     }
 
                     //if (headResults.Length == 0)
@@ -162,11 +166,11 @@ namespace HumanRemote.Server.Pipeline
             public void Dispose()
             {
                 if (_bg != null) _bg.Dispose();
-                if (_nose != null)
-                {
-                    _nose.Dispose();
-                    _nose = null;
-                }
+                //if (_nose != null)
+                //{
+                //    _nose.Dispose();
+                //    _nose = null;
+                //}
             }
         }
     }
